@@ -1,28 +1,186 @@
 <template>
   <div id="app">
-    <img alt="Vue logo" src="./assets/logo.png">
-    <HelloWorld msg="Welcome to Your Vue.js App"/>
+    <div class="card">
+      <div v-if="comments" id="comments">
+        <Comment v-for="(comment, index) in comments" v-bind:key="'comment-' + index" :item="comment"></Comment>
+      </div>
+      <CommentForm></CommentForm>
+    </div>
   </div>
 </template>
 
 <script>
-import HelloWorld from './components/HelloWorld.vue'
 
+import { mapActions, mapState } from 'vuex'
+import Comment from './components/Comment'
+import CommentForm from './components/CommentForm'
 export default {
   name: 'App',
   components: {
-    HelloWorld
+    Comment,
+    CommentForm
+  },
+  computed: {
+    ...mapState({
+      comments: state => state.comments
+    }),
+  },
+  created() {
+    this.getComments()
+  },
+  watch: {
+    'comments': {
+      handler: function (val, oldVal) {
+        if (oldVal) {
+          this.$bus.emit('commentAdded')
+        }
+      },
+      deep: true
+    }
+  },
+  methods: {
+    ...mapActions(['getComments']),
   }
 }
 </script>
 
 <style lang="scss">
-#app {
-  font-family: Avenir, Helvetica, Arial, sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  text-align: center;
-  color: #2c3e50;
-  margin-top: 60px;
+@import url('https://fonts.googleapis.com/css2?family=Roboto:wght@400;500&display=swap');
+$background-color: #f2f2f2;
+$border-color: #e9e9e9;
+$font-family: 'Roboto', sans-serif;
+body {
+  background-color: $background-color;
+  font-family: $font-family;
+  font-size: 15px;
 }
+* {
+  box-sizing: border-box;
+}
+b {
+  font-weight: 500;
+}
+.card {
+  max-width: 400px;
+  margin: 0 auto;
+  background-color: #FFFFFF;
+  #comments {
+    min-height: 500px;
+  }
+  #commentForm {
+    position: relative;
+    #mentioned {
+      position: absolute;
+      width: 100%;
+      bottom: 100%;
+    }
+  }
+  .comment {
+    $commentAvatarWidth: 45px;
+    $commentButtonWidth: 60px;
+    padding: 10px 20px;
+    overflow: auto;
+    position: relative;
+    display: flex;
+    &:not(:last-of-type)::before {
+      background-color: $border-color;
+      height: 1px;
+      width: calc(100% - 4px);
+      bottom: 0;
+      right: 0;
+      content: "";
+      position: absolute;
+    }
+    &.comment--show {
+      > div {
+        &.comment__content {
+          width: calc(100% - #{$commentAvatarWidth});
+        }
+      }
+    }
+    &.comment--mentioned {
+      cursor: pointer;
+      background-color: $background-color;
+      .comment__content {
+        width: calc(100% - #{$commentAvatarWidth});
+        position: relative;
+        .comment__content--userdata {
+          position: absolute;
+          top: 50%;
+          transform: translateY(-50%);
+        }
+      }
+    }
+    &.comment--active {
+      background-color: $border-color;
+    }
+    &.comment--form {
+      border-top: 1px solid $border-color;
+      > div {
+        &.comment__content {
+          width: calc(100% - (#{$commentAvatarWidth} + #{$commentButtonWidth}));
+          .comment__content--text {
+            -moz-appearance: textfield-multiline;
+            -webkit-appearance: textarea;
+            display: block;
+            font-family: $font-family;
+            outline: none !important;
+            border: none;
+            font-size: 15px;
+            resize: none;
+            overflow: hidden;
+            width: 100%;
+            min-height: 100%;
+            div {
+              display: inline-block;
+              max-width: 100%;
+              overflow-wrap: break-word;
+            }
+          }
+        }
+        &.comment__button {
+          width: $commentButtonWidth;
+          position: relative;
+          button {
+            font-family: $font-family;
+            color: #0abaf4;
+            background-color: transparent;
+            border: none;
+            cursor: pointer;
+            font-weight: 500;
+            padding: 0;
+            font-size: 14px;
+            position: absolute;
+            top: 50%;
+            right: 0;
+            transform: translateY(-50%);
+          }
+        }
+      }
+    }
+    > div {
+      float: left;
+      &.comment__avatar {
+        width: $commentAvatarWidth;
+        height: $commentAvatarWidth;
+        img {
+          border-radius: 100%;
+          width: 100%;
+        }
+      }
+      &.comment__content {
+        padding-left: 15px;
+        .comment__content--time {
+          color: #858585;
+          font-size: 14px;
+          font-weight: 500;
+          margin-top: 5px;
+        }
+      }
+    }
+
+  }
+}
+
+
 </style>

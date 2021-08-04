@@ -1,0 +1,31 @@
+{
+  "page": 1,
+  "per_page": 6,
+  "total": 2,
+  "total_pages": 1,
+  "data": [
+    {
+      "id": 1,
+      "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been the industry's standard dummy text ever since the 1500",
+      "created_at" : "2020-08-11 07:54:03",
+      "email": "george.bluth@reqres.in",
+      "first_name": "George",
+      "last_name": "Bluth",
+      "avatar": "https://randomuser.me/api/portraits/men/72.jpg"
+    },
+    {
+      "id": 2,
+      "text": "Lorem Ipsum is simply dummy text of the printing and typesetting industry. Lorem Ipsum has been.",
+      "created_at" : "2020-08-10 09:31:12",
+      "email": "janet.weaver@reqres.in",
+      "first_name": "Janet",
+      "last_name": "Weaver",
+      "avatar": "https://randomuser.me/api/portraits/women/33.jpg"
+    }
+  ],
+  "ad": {
+    "company": "StatusCode Weekly",
+    "url": "http://statuscode.org/",
+    "text": "A weekly newsletter focusing on software development, infrastructure, the server, performance, and the stack end of things."
+  }
+}

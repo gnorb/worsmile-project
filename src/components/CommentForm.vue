@@ -6,7 +6,7 @@
            v-bind:key="'mentioned-' + index"
            v-bind:class="{ 'comment--active': index === active }"
            @mouseenter="active = index"
-           @mouseup="getMentionedUser()">
+           @mouseup="injectUser()">
         <div class="comment__avatar">
           <img :src="user.avatar">
         </div>
@@ -26,8 +26,8 @@
           <div class="comment__content--text"
                contenteditable
                @keydown="preventActions($event)"
-               @keyup="updateText()"
-               @paste="updateText()"
+               @keyup="textInjection($event)"
+               @paste="textInjection($event)"
                spellcheck="false"
                ref="comment-content-text"></div>
         </div>
@@ -49,6 +49,7 @@ export default {
         text: ''
       },
       mentioned: [],
+      mention: null,
       active: -1
     }
   },
@@ -69,6 +70,99 @@ export default {
   },
   methods: {
     ...mapActions(['getUsers', 'addComment']),
+    preventButtons (event) {
+      if (event.key === 'Shift' || event.key === 'Enter' || event.key === 'Control' || event.key === 'Alt') {
+        return false
+      } else {
+        return true
+      }
+    },
+    textInjection(event) {
+      if (this.preventButtons(event)) {
+        let selection = window.getSelection()
+        const SELECTION_TEXT = selection.getRangeAt(0).endContainer
+        let text = SELECTION_TEXT.textContent
+        let caret = window.getSelection().getRangeAt(0).startOffset
+        if (SELECTION_TEXT.nodeName === '#text') {
+          for (let i in this.icons) {
+            text = text.replaceAll(this.icons[i].text, this.icons[i].emoticon)
+          }
+          if (text.includes('@')) {
+            let textArray = Array.from(text);
+            let index = textArray.findIndex((item) => item === '@')
+            // let mentions = textArray.filter((item, index) => item.includes('@'))
+            // let mentions = textArray.indexOf('@', 0)
+            // console.log(mentions)
+            let mention = ''
+            for (let i = index + 1; i < textArray.length; i++) {
+              if (/[A-Za-z]/.test(textArray[i])) {
+                mention += textArray[i]
+              } else {
+                break
+              }
+            }
+            // console.log('caret: ' + caret)
+            const MENTION_START = text.indexOf('@' + mention)
+            const MENTION_END = MENTION_START + Array.from(mention).length + 1
+            // console.log('MENTION_START: ' + MENTION_START)
+            // console.log('MENTION_END: ' + MENTION_END)
+            // console.log(MENTION_END - MENTION_START)
+            if (caret >= MENTION_START && caret <= MENTION_END) {
+              this.mention = mention
+              this.mentioned = (mention.length > 0) ? this.users.filter((item) => {
+                return (item.first_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.first_name.substring(0, 1).toUpperCase()))
+                    || (item.last_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.last_name.substring(0, 1).toUpperCase()))
+              }) : []
+            } else {
+              this.mentioned = []
+            }
+
+          } else if (this.mentioned.length > 0) {
+            this.mentioned = []
+          }
+          SELECTION_TEXT.textContent = text
+
+          let range = document.createRange()
+          range.setStart(SELECTION_TEXT, caret)
+          range.collapse(true)
+          selection.removeAllRanges()
+          selection.addRange(range)
+          this.$set(this.item, 'text', text)
+        }
+      }
+    },
+    injectUser() {
+      let container = this.$refs['comment-content-text']
+      let text = container.innerHTML
+      let selection = window.getSelection()
+
+      let user = this.mentioned[this.active]
+      if (user) {
+        user = Object.assign({}, user)
+      }
+      let mentionHTML = '<span id="current-mention" contentEditable="false">' + user.first_name + ' ' + user.last_name + '</span>'
+      this.mentioned = []
+      this.active = -1
+
+      text = text.replace('@' + this.mention, mentionHTML)
+      this.mention = null
+
+      container.innerHTML = text
+      let spanText = document.getElementById('current-mention')
+      let nextText = spanText.nextSibling
+      if (!nextText) {
+        nextText = document.createTextNode('')
+        container.appendChild(nextText)
+      }
+      let range = document.createRange()
+      range.setStart(nextText, 0)
+      range.collapse(true)
+      selection.removeAllRanges()
+      selection.addRange(range)
+      spanText.removeAttribute('id')
+      console.log(spanText)
+      this.$set(this.item, 'text', text.replaceAll('id="current-mention" contentEditable="false"', ''))
+    },
     submitForm(event = null) {
       if (event) event.preventDefault()
       if (this.item.text.length > 0) {
@@ -84,37 +178,13 @@ export default {
       this.item.text = ''
       this.$refs['comment-content-text'].innerHTML = ''
     },
-    getMentionedUser() {
-      let user = this.mentioned[this.active]
-      if (user) {
-        user = Object.assign({}, user)
-      }
-      this.mentioned = []
-      this.active = -1
-      console.log(user)
-      let textarea = this.$refs['comment-content-text'].firstChild
-      let text = textarea.data.replace('<br>', '')
-      let arrayText = text.split(" ")
-      let caret = window.getSelection().getRangeAt(0).endOffset
-      text = text.replace(arrayText[arrayText.findIndex((item) => item.includes('@'))], '<span>' + user.first_name + ' ' + user.last_name + '</span> ')
-      // textarea.parentElement.innerHTML = text
-      textarea.data = text
-      this.$set(this.item, 'text', text)
-      let range = document.createRange()
-      console.log(textarea)
-      range.setStart(textarea, caret)
-      range.setEnd(textarea, caret)
-      let sel = window.getSelection()
-      sel.removeAllRanges()
-      sel.addRange(range)
-    },
     preventActions(event) {
       if (event.keyCode === 13) {
         event.preventDefault()
         if (this.mentioned.length === 0) {
           this.submitForm()
         } else if (this.active >= 0) {
-          this.getMentionedUser()
+          this.injectUser()
         }
       } else if ((event.keyCode === 38 || event.keyCode === 40) && this.mentioned.length > 0) {
         event.preventDefault()
@@ -130,40 +200,6 @@ export default {
           }
         } else if (event.keyCode === 38) {
           this.active = this.mentioned.length - 1
-        }
-      }
-    },
-    updateText() {
-      let textarea = this.$refs['comment-content-text'].firstChild
-      // console.log(textarea.parentElement)
-      if (textarea) {
-        let oldText = this.item.text
-        let text = textarea.data.replaceAll('<div>', '').replaceAll('</div>', '').replaceAll('<>', '')
-        console.log(text)
-        this.$set(this.item, 'text', text)
-        if (oldText !== text) {
-          let caret = window.getSelection().getRangeAt(0).endOffset
-          console.log(caret)
-          for (let i in this.icons) {
-            text = text.replaceAll(this.icons[i].text, this.icons[i].emoticon)
-          }
-          if (text.includes('@')) {
-            let mention = text.split(" ").filter((item) => item.includes('@'))[0].replaceAll(' ', '').replaceAll('@', '')
-            this.mentioned = (mention.length > 0) ? this.users.filter((item) => {
-              return (item.first_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.first_name.substring(0, 1).toUpperCase()))
-                  || (item.last_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.last_name.substring(0, 1).toUpperCase()))
-            }) : []
-          } else if (this.mentioned.length > 0) {
-            this.mentioned = []
-          }
-          textarea.data = text
-          // textarea.innerHTML = '<div>' + text + '</div>'
-          let range = document.createRange()
-          range.setStart(textarea, caret)
-          range.setEnd(textarea, caret)
-          let sel = window.getSelection()
-          sel.removeAllRanges()
-          sel.addRange(range)
         }
       }
     }

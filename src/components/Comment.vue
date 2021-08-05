@@ -5,7 +5,7 @@
     </div>
     <div class="comment__content">
       <div class="comment__content--text">
-        <b>{{ item.first_name }} {{ item.last_name }}:</b> {{ item.text }}
+        <b>{{ item.first_name }} {{ item.last_name }}:</b> <div v-html="item.text"></div>
       </div>
       <div class="comment__content--time">
         {{ createdAt }}

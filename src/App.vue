@@ -49,6 +49,7 @@ export default {
 $background-color: #f2f2f2;
 $border-color: #e9e9e9;
 $font-family: 'Roboto', sans-serif;
+$aqua: #0abaf4;
 body {
   background-color: $background-color;
   font-family: $font-family;
@@ -95,6 +96,11 @@ b {
       > div {
         &.comment__content {
           width: calc(100% - #{$commentAvatarWidth});
+          .comment__content--text {
+            div {
+              display: inline;
+            }
+          }
         }
       }
     }
@@ -131,8 +137,9 @@ b {
             overflow: hidden;
             width: 100%;
             min-height: 100%;
+            margin: 0;
             div {
-              display: inline-block;
+              // display: inline-block;
               max-width: 100%;
               overflow-wrap: break-word;
             }
@@ -143,7 +150,7 @@ b {
           position: relative;
           button {
             font-family: $font-family;
-            color: #0abaf4;
+            color: $aqua;
             background-color: transparent;
             border: none;
             cursor: pointer;
@@ -175,6 +182,13 @@ b {
           font-size: 14px;
           font-weight: 500;
           margin-top: 5px;
+        }
+        .comment__content--text {
+          span {
+            display: inline-block;
+            font-weight: 500;
+            color: $aqua;
+          }
         }
       }
     }

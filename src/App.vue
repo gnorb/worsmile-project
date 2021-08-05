@@ -99,6 +99,8 @@ b {
           .comment__content--text {
             div {
               display: inline;
+              max-width: 100%;
+              overflow-wrap: break-word;
             }
           }
         }

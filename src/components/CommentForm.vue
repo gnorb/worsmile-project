@@ -49,7 +49,10 @@ export default {
         text: ''
       },
       mentioned: [],
-      mention: null,
+      mention: {
+        text: null,
+        index: null
+      },
       active: -1
     }
   },
@@ -70,8 +73,14 @@ export default {
   },
   methods: {
     ...mapActions(['getUsers', 'addComment']),
+    clearMention() {
+      this.mention = {
+        text: null,
+        index: null
+      }
+    },
     preventButtons (event) {
-      if (event.key === 'Shift' || event.key === 'Enter' || event.key === 'Control' || event.key === 'Alt') {
+      if (event.key === 'Shift' || event.key === 'Enter' || event.key === 'Control' || event.key === 'Alt' || (this.mentioned.length > 0 && (event.key === 'ArrowUp' || event.key === 'ArrowDown'))) {
         return false
       } else {
         return true
@@ -79,20 +88,26 @@ export default {
     },
     textInjection(event) {
       if (this.preventButtons(event)) {
-        let selection = window.getSelection()
+        const CONTENTEDITABLE = this.$refs['comment-content-text']
+        const selection = window.getSelection()
         const SELECTION_TEXT = selection.getRangeAt(0).endContainer
         let text = SELECTION_TEXT.textContent
-        let caret = window.getSelection().getRangeAt(0).startOffset
+        let caret = selection.getRangeAt(0).startOffset
         if (SELECTION_TEXT.nodeName === '#text') {
           for (let i in this.icons) {
             text = text.replaceAll(this.icons[i].text, this.icons[i].emoticon)
           }
           if (text.includes('@')) {
             let textArray = Array.from(text);
-            let index = textArray.findIndex((item) => item === '@')
-            // let mentions = textArray.filter((item, index) => item.includes('@'))
-            // let mentions = textArray.indexOf('@', 0)
-            // console.log(mentions)
+            let mentions = textArray.reduce(function(arr, e, i) {
+              if (e.includes('@')) arr.push(i);
+              return arr;
+            }, [])
+
+            let a = 0
+            while(mentions[++a] < caret);
+            let index = mentions[--a]
+
             let mention = ''
             for (let i = index + 1; i < textArray.length; i++) {
               if (/[A-Za-z]/.test(textArray[i])) {
@@ -101,14 +116,10 @@ export default {
                 break
               }
             }
-            // console.log('caret: ' + caret)
-            const MENTION_START = text.indexOf('@' + mention)
-            const MENTION_END = MENTION_START + Array.from(mention).length + 1
-            // console.log('MENTION_START: ' + MENTION_START)
-            // console.log('MENTION_END: ' + MENTION_END)
-            // console.log(MENTION_END - MENTION_START)
-            if (caret >= MENTION_START && caret <= MENTION_END) {
-              this.mention = mention
+
+            if (caret >= index && caret <= index + Array.from(mention).length + 1) {
+              this.mention.text = mention
+              this.mention.index = index
               this.mentioned = (mention.length > 0) ? this.users.filter((item) => {
                 return (item.first_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.first_name.substring(0, 1).toUpperCase()))
                     || (item.last_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.last_name.substring(0, 1).toUpperCase()))
@@ -116,18 +127,17 @@ export default {
             } else {
               this.mentioned = []
             }
-
           } else if (this.mentioned.length > 0) {
             this.mentioned = []
           }
-          SELECTION_TEXT.textContent = text
 
+          SELECTION_TEXT.textContent = text
           let range = document.createRange()
           range.setStart(SELECTION_TEXT, caret)
           range.collapse(true)
           selection.removeAllRanges()
           selection.addRange(range)
-          this.$set(this.item, 'text', text)
+          this.$set(this.item, 'text', CONTENTEDITABLE.innerHTML)
         }
       }
     },
@@ -144,10 +154,12 @@ export default {
       this.mentioned = []
       this.active = -1
 
-      text = text.replace('@' + this.mention, mentionHTML)
-      this.mention = null
-
+      let firstPart = text.substring(0, this.mention.index)
+      let lastPart = text.substring(this.mention.index, text.length)
+      text = firstPart + lastPart.replace('@' + this.mention.text, mentionHTML)
       container.innerHTML = text
+      this.clearMention()
+
       let spanText = document.getElementById('current-mention')
       let nextText = spanText.nextSibling
       if (!nextText) {
@@ -160,7 +172,6 @@ export default {
       selection.removeAllRanges()
       selection.addRange(range)
       spanText.removeAttribute('id')
-      console.log(spanText)
       this.$set(this.item, 'text', text.replaceAll('id="current-mention" contentEditable="false"', ''))
     },
     submitForm(event = null) {

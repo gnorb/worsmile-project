@@ -30,12 +30,12 @@ export default {
     }
   },
   created() {
-    // this.$bus.on('commentAdded', this.setTimeText)
+    this.$bus.on('commentAdded', this.setTimeText)
     this.setTimeText()
 
   },
   beforeDestroy() {
-    // this.$bus.off('commentAdded')
+    this.$bus.off('commentAdded')
     if (this.interval) {
       clearInterval(this.interval)
     }
@@ -45,9 +45,9 @@ export default {
       let item = this.item
       if (item && item.created_at) {
         this.createdAt = this.$moment(this.$moment(item.created_at)).fromNow()
-        this.interval = setInterval(() => {
-          this.setTimeText()
-        }, 3600)
+        // this.interval = setInterval(() => {
+        //   this.setTimeText()
+        // }, 3600)
       } else {
         this.createdAt = ''
       }

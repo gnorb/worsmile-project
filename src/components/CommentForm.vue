@@ -80,7 +80,7 @@ export default {
       }
     },
     preventButtons (event) {
-      if (event.key === 'Shift' || event.key === 'Enter' || event.key === 'Control' || event.key === 'Alt' || (this.mentioned.length > 0 && (event.key === 'ArrowUp' || event.key === 'ArrowDown'))) {
+      if (event.ctrlKey || event.key === 'Shift' || event.key === 'Enter' || event.key === 'Control' || event.key === 'Alt' || (this.mentioned.length > 0 && (event.key === 'ArrowUp' || event.key === 'ArrowDown'))) {
         return false
       } else {
         return true

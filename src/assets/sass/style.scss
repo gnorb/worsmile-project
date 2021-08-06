@@ -19,16 +19,16 @@ b {
   margin: 0 auto;
   background-color: #FFFFFF;
   #comments {
-    height: 500px;
+    min-height: 400px;
     overflow-y: auto;
-    &::-webkit-scrollbar {
-      width: 4px;
-    }
-    &::-webkit-scrollbar-thumb {
-      border-radius: 2px;
-      background-color: $aqua;
-      cursor: pointer;
-    }
+    //&::-webkit-scrollbar {
+    //  width: 4px;
+    //}
+    //&::-webkit-scrollbar-thumb {
+    //  border-radius: 2px;
+    //  background-color: $aqua;
+    //  cursor: pointer;
+    //}
   }
   #commentForm {
     position: relative;

@@ -4,6 +4,9 @@
       <div v-if="comments" id="comments">
         <Comment v-for="(comment, index) in comments" v-bind:key="'comment-' + index" :item="comment"></Comment>
       </div>
+      <div v-else id="loaderContainer">
+        <div class="loader">Loading...</div>
+      </div>
       <CommentForm></CommentForm>
     </div>
   </div>

@@ -93,9 +93,11 @@ export default {
         const SELECTION_TEXT = selection.getRangeAt(0).endContainer
         let text = SELECTION_TEXT.textContent
         let caret = selection.getRangeAt(0).startOffset
+        let iconsQuantity = 0
         if (SELECTION_TEXT.nodeName === '#text') {
           for (let i in this.icons) {
             text = text.replaceAll(this.icons[i].text, this.icons[i].emoticon)
+            iconsQuantity += Array.from(text).filter((item) => item === this.icons[i].emoticon).length
           }
           if (text.includes('@')) {
             let textArray = Array.from(text);
@@ -116,10 +118,10 @@ export default {
                 break
               }
             }
-
-            if (caret >= index && caret <= index + Array.from(mention).length + 1) {
+            let end = index + mention.length + 1 + iconsQuantity
+            if (caret >= index + iconsQuantity && caret <= end) {
               this.mention.text = mention
-              this.mention.index = index
+              this.mention.index = index + iconsQuantity
               this.mentioned = (mention.length > 0) ? this.users.filter((item) => {
                 return (item.first_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.first_name.substring(0, 1).toUpperCase()))
                     || (item.last_name.toUpperCase().includes(mention.toUpperCase()) && (mention.substring(0, 1).toUpperCase() === item.last_name.substring(0, 1).toUpperCase()))
